@@ -8,6 +8,11 @@
     "module": "ESNext",
     "lib": ["ESNext", "DOM"],
     "types": ["vite/client"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "jsx": "preserve"
   }
 }
