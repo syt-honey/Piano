@@ -11,7 +11,7 @@ const Counter: NetlessApp = {
     box.mountStyles(styles);
 
     const $content = document.createElement("div");
-    $content.className = "pinao-container";
+    $content.className = "piano-container";
     box.mountContent($content);
 
     const app = createApp(App).provide("context", context);

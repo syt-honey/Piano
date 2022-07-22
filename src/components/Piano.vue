@@ -1,97 +1,131 @@
 <script lang="ts" setup>
+import type { Note, KeyPressType } from "./typings";
+
 import { Notes } from "../utils/index.js";
+import { getToHandleList, getNoteByKeyCode } from "../utils/common.js";
 import SmapleLibrary from "../lib/tonejs-instruments";
-import { defineProps } from 'vue'
-import { ref } from "vue";
+import { ref, onMounted, nextTick, onBeforeUnmount, reactive } from "vue";
 
-export interface Note {
-  type: string,
-  id: number,
-  keyCode: string,
-  name: string,
-  key: string
-}
-
-const isDev = ref(false);
 let showPiano = ref(false);
+let preNoteIdx: number = -1;
+const isDev = ref(false);
 const showKeyName = ref(true);
 const showNoteName = ref(false);
+const ShiftKeyCode = "16";
+let enableBlackKey = false;
+
+const noteList: Note[] = reactive(Notes);
+const stepper: number[] = getToHandleList();
 
 const synth = SmapleLibrary.load({
   instruments: "piano"
 }).toMaster();
-const Note: Note[] = Notes;
 
-const bindKeyBoradEvent = () => {
-  let enableBlackKey = false;
+window?.manager.emitter.on("boxStateChange", (state) => {
+  if (state === "minimized") {
+    clearKeyboardEvent();
+  }
+});
+
+onMounted(() => {
+  initKeyboardEvent();
+
+  nextTick(() => {
+    computeEleSize();
+    showPiano.value = true
+  });
+});
+
+onBeforeUnmount(() => {
+  clearKeyboardEvent();
+});
+
+function clearKeyboardEvent() {
+  document.onkeydown = null;
+  document.onkeyup = null;
+}
+
+function initKeyboardEvent(): void {
+  document.onkeydown = e => toKeyDown(e)
+  document.onkeyup = e => toKeyUp(e);
+};
+
+function toKeyUp(e: KeyboardEvent) {
+  let keyCode = e.keyCode + "";
+  if (keyCode == ShiftKeyCode) {
+    enableBlackKey = false;
+  }
+
+  if (preNoteIdx !== -1) {
+    noteList[preNoteIdx].actived = false;
+  }
+}
+
+function toKeyDown(e: KeyboardEvent) {
   let lastKeyCode = "";
   let keyLock = false;
   let keydownTimer = 0;
-  const ShiftKeyCode = "16";
-  document.addEventListener(
-    "keydown",
-    e => {
-      let keyCode = e.keyCode + "";
-      if (isDev.value) console.log("keydown", keyCode);
-      // 按住Shfit键，则启用黑色按键
-      if (keyCode == ShiftKeyCode) {
-        enableBlackKey = true;
-      }
-      if (enableBlackKey) keyCode = "b" + keyCode;
+  let keyCode = e.keyCode + "";
 
-      if (keyCode == lastKeyCode) {
-        // 连续触发同一个键时，应节流 + 延音
-        if (!keyLock) {
-          playNoteByKeyCode(keyCode);
-          // 这里应该延音，解决中...
-          lastKeyCode = keyCode;
-          keyLock = true;
-        }
-        if (keydownTimer) {
-          clearTimeout(keydownTimer);
-          keydownTimer = 0;
-        }
-        keydownTimer = setTimeout(() => {
-          keyLock = false;
-        }, 120);
-      } else {
-        playNoteByKeyCode(keyCode);
-        lastKeyCode = keyCode;
-      }
-    },
-    false
-  );
+  if (isDev.value) console.log("keydown", keyCode);
 
-  document.addEventListener(
-    "keyup",
-    e => {
-      let keyCode = e.keyCode + "";
-      // 松开Shfit键，则禁用黑色按键
-      if (keyCode == ShiftKeyCode) {
-        enableBlackKey = false;
-      }
-    },
-    false
-  );
-};
-
-bindKeyBoradEvent();
-
-const getNoShowList = (): number[] => {
-  let list = [2];
-  let sum = 3;
-  let f = false; // 对应是要加 2 还是要加 3，true 为 2
-  while(sum < 23) {
-    sum += f ? 2 : 3;
-    list.push(sum - 1);
-    f = !f;
+  // 按住Shfit键，则启用黑色按键
+  if (keyCode == ShiftKeyCode) {
+    enableBlackKey = true;
   }
-  return list;
+
+  if (enableBlackKey) keyCode = "b" + keyCode;
+
+  if (keyCode == lastKeyCode) {
+    // 连续触发同一个键时，应节流 + 延音
+    if (!keyLock) {
+      toPlayNote(null, keyCode, "keyboard");
+      // 这里应该延音，解决中...
+      lastKeyCode = keyCode;
+      keyLock = true;
+    }
+    if (keydownTimer) {
+      clearTimeout(keydownTimer);
+      keydownTimer = 0;
+    }
+
+    keydownTimer = setTimeout(() => {
+      keyLock = false;
+    }, 120);
+
+  } else {
+    toPlayNote(null, keyCode, "keyboard");
+    lastKeyCode = keyCode;
+  }
+
+  e.preventDefault();
 }
 
-const stepper: number[] = getNoShowList();
+function toPlayNote(e: Event | null, keyCode: string, type?: KeyPressType): void {
+  let { note, idx } = getNoteByKeyCode(noteList, keyCode);
 
-const computeEleSize = () => {
+  if (note) {
+    playNote(note.name);
+
+    if (type === "keyboard" && idx) {
+      if (preNoteIdx !== -1) {
+        noteList[preNoteIdx].actived = false;
+      }
+
+      preNoteIdx = idx;
+      noteList[idx].actived = true;
+    }
+  }
+}
+
+function playNote(notename: string = "C4", duration: string = "1n"): void {
+  if (!synth) return;
+  try {
+    synth.triggerAttackRelease(notename, duration);
+  } catch (e) {}
+};
+
+function computeEleSize(): void {
     const key = document.getElementById('piano-key-wrap');
     const wkey_width = 0.02775;
     const bkey_width = 0.0222;
@@ -115,108 +149,64 @@ const computeEleSize = () => {
     }
 }
 
-setTimeout(() => {
-  computeEleSize();
-  showPiano.value = true
-}, 300)
-
-// 根据键值播放音符
-const playNoteByKeyCode = (keyCode: string) => {
-  let pressedNote = getNoteByKeyCode(keyCode);
-  if (pressedNote) {
-    playNote(pressedNote.name);
-  }
-};
-
-const getNoteByKeyCode = (keyCode: string) => {
-  let target;
-  let len = Note.length || 0;
-  for (let i = 0; i < len; i++) {
-    let note = Note[i];
-    if (note.keyCode == keyCode) {
-      target = note;
-      break;
-    }
-  }
-  return target;
-};
-
-const playNote = (notename = "C4", duration = "1n") => {
-  if (!synth) return;
-  try {
-    synth.triggerAttackRelease(notename, duration);
-  } catch (e) {}
-};
-
-const clickPianoKey = (e: Event, keyCode: string) => {
-  let pressedNote = getNoteByKeyCode(keyCode)
-  if (pressedNote) {
-    playNote(pressedNote.name)
-  }
+function getKeyType(type: string) {
+  return type === "black" ? "bkey" : "wkey";
 }
 </script>
 
 <template>
-  <div class="component-autopiano" ref="PianoComponent">
-    <div class="piano-scroll-wrap">
-      <div
-        class="piano-wrap responsive-section-a"
-        :class="{'visible': showPiano}"
-      >
-        <div class="piano-band">
-          <div class="piano-tip">⇧ 代表 shift 键</div>
-        </div>
-        <div id="piano-key-wrap" class="piano-key-wrap">
-          <template v-for="note in Note">
-            <div
-              :class="['piano-key', note.type == 'black' ? 'bkey' : 'wkey']"
-              :data-keyCode="note.keyCode"
-              :data-name="note.name"
-              @click.stop="clickPianoKey($event, note.keyCode)"
-            >
-              <div class="keytip">
-                <div
-                  v-if="note.type == 'black'"
-                  class="keyname"
-                  v-html="note.key"
-                  v-show="showKeyName"
-                ></div>
-                <div v-else class="keytip">
-                  <div class="keyname" v-show="showKeyName">{{ note.key }}</div>
-                  <div class="notename" v-show="showNoteName">{{ note.name }}</div>
+  <div class="piano-scroll-wrap">
+    <div
+      class="piano-wrap responsive-section-a"
+      :class="{ visible: showPiano }"
+    >
+      <div class="piano-band">
+        <div class="piano-tip">⇧ 代表 shift 键</div>
+      </div>
+      <div id="piano-key-wrap" class="piano-key-wrap">
+        <template v-for="note in noteList">
+          <div
+            :class="[
+              'piano-key',
+              getKeyType(note.type),
+              note.actived && `${getKeyType(note.type)}-active`
+            ]"
+            :data-keyCode="note.keyCode"
+            :data-name="note.name"
+            @click.stop="toPlayNote($event, note.keyCode)"
+          >
+            <div class="keytip">
+              <div
+                v-if="note.type == 'black'"
+                v-show="showKeyName"
+                class="keyname"
+                v-html="note.key"
+              ></div>
+              <div v-else class="keytip">
+                <div class="keyname" v-show="showKeyName">{{ note.key }}</div>
+                <div class="notename" v-show="showNoteName">
+                  {{ note.name }}
                 </div>
               </div>
             </div>
-          </template>
-        </div>
+          </div>
+        </template>
       </div>
     </div>
+  </div>
 
-    <div class="piano-options responsive-section-a">
-      <div class="option-item-wrap">
-        <div class="option-item">
-          <label class="label">
-            显示按键提示
-            <input type="checkbox" id="keyname" v-model="showKeyName" />
-            <i></i>
-          </label>
-        </div>
+  <div class="piano-options">
+    <label class="label">
+      显示按键提示
+      <input type="checkbox" id="keyname" v-model="showKeyName" />
+      <i></i>
+    </label>
 
-        <div class="option-item">
-          <label class="label">
-            显示音名
-            <input type="checkbox" id="notename" v-model="showNoteName" />
-            <i></i>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <canvas id="audioEffectCanvas" ref="audioEffectCanvas"
-      >您的浏览器不支持
-      <pre>Canvas</pre>
-      。请升级到最新版的chrome、firefox、edge等浏览器。</canvas
-    >
+    <label class="label">
+      显示音名
+      <input type="checkbox" id="notename" v-model="showNoteName" />
+      <i></i>
+    </label>
   </div>
 </template>
 
