@@ -65,31 +65,11 @@
         0 4px 3px rgba(0, 0, 0, 0.7);
       border-radius: 0 0 5px 5px;
 
-      &-active,
-      &:active {
+      &-active {
         top: -1%;
         height: 99%;
         box-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
-        background: #efefef;
-      }
-
-      &:active:before,
-      &:active:after {
-        position: absolute;
-        bottom: 0;
-        content: "";
-        border-width: 250px 5px 0px;
-        border-style: solid;
-      }
-
-      &:active:before {
-        left: 0;
-        border-color: transparent transparent transparent rgba(0, 0, 0, 0.1);
-      }
-
-      &:active:after {
-        right: 0;
-        border-color: transparent rgba(0, 0, 0, 0.1) transparent transparent;
+        background: rgb(250, 219, 245, .5);
       }
 
       .keytip {
@@ -123,13 +103,13 @@
         0 2px 3px rgba(0, 0, 0, 0.4);
       overflow: hidden;
 
-      &-active,
-      &:active {
+      &-active {
         height: 70.5%;
-        border-bottom-width: 2px;
         box-shadow: inset 0px -1px 1px rgba(255, 255, 255, 0.4),
           0 1px 0px rgba(0, 0, 0, 0.8), 0 2px 2px rgba(0, 0, 0, 0.4),
           0 -1px 0px #000;
+        background: rgba(63, 140, 249);
+        border-color: rgba(63, 140, 249);
       }
 
       .keytip {

@@ -7,5 +7,3 @@ export interface Note {
   actived?: boolean
 }
 
-export type KeyPressType = "mouse" | "keyboard";
-

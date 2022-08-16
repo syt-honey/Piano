@@ -1,20 +1,32 @@
 <script lang="ts" setup>
-import type { Note, KeyPressType } from "./typings";
+import type { Note } from "./typings";
 
 import { Notes } from "../utils/index.js";
-import { getToHandleList, getNoteByKeyCode } from "../utils/common.js";
 import SmapleLibrary from "../lib/tonejs-instruments";
-import { ref, onMounted, nextTick, onBeforeUnmount, reactive } from "vue";
+import { getToHandleList, getNoteByKeyCode } from "../utils/common.js";
+import { ref, onMounted, nextTick, onBeforeUnmount } from "vue";
 
-let showPiano = ref(false);
-let preNoteIdx: number = -1;
+const { context } = defineProps(['context']);
+
+const storage = context.createStorage("APianoni1234435", {
+  showKeyName: true,
+  showNoteName: false,
+  showPiano: false,
+  currentIdx: -1,
+  noteName: ""
+});
+
+const showKeyName = ref(storage.state.showKeyName);
+let showNoteName = ref(storage.state.showNoteName);
+let showPiano = ref(storage.state.showPiano);
+let currentIdx = ref(storage.state.currentIdx);
+let noteName = ref(storage.state.noteName);
+let noteList: Note[] = Notes;
+
 const isDev = ref(false);
-const showKeyName = ref(true);
-const showNoteName = ref(false);
 const ShiftKeyCode = "16";
 let enableBlackKey = false;
 
-const noteList: Note[] = reactive(Notes);
 const stepper: number[] = getToHandleList();
 
 const synth = SmapleLibrary.load({
@@ -28,11 +40,31 @@ window?.manager.emitter.on("boxStateChange", (state) => {
 });
 
 onMounted(() => {
+  storage.addStateChangedListener((o: any) => {
+    if (o.hasOwnProperty("showKeyName")) {
+      showKeyName.value = storage.state.showKeyName;
+    }
+
+    if (o.hasOwnProperty("showNoteName")) {
+      showNoteName.value = storage.state.showNoteName;
+    }
+
+    if (o.hasOwnProperty("showPiano")) {
+      showPiano.value = storage.state.showPiano;
+    }
+
+    if (o.hasOwnProperty("currentIdx")) {
+      currentIdx.value = storage.state.currentIdx;
+      noteName.value = storage.state.playNote;
+      playNote(noteName.value)
+    }
+  });
+
   initKeyboardEvent();
 
   nextTick(() => {
     computeEleSize();
-    showPiano.value = true
+    storage.setState({ ...storage.state, showPiano: true });
   });
 });
 
@@ -46,20 +78,9 @@ function clearKeyboardEvent() {
 }
 
 function initKeyboardEvent(): void {
-  document.onkeydown = e => toKeyDown(e)
+  document.onkeydown = e => toKeyDown(e);
   document.onkeyup = e => toKeyUp(e);
 };
-
-function toKeyUp(e: KeyboardEvent) {
-  let keyCode = e.keyCode + "";
-  if (keyCode == ShiftKeyCode) {
-    enableBlackKey = false;
-  }
-
-  if (preNoteIdx !== -1) {
-    noteList[preNoteIdx].actived = false;
-  }
-}
 
 function toKeyDown(e: KeyboardEvent) {
   let lastKeyCode = "";
@@ -77,10 +98,8 @@ function toKeyDown(e: KeyboardEvent) {
   if (enableBlackKey) keyCode = "b" + keyCode;
 
   if (keyCode == lastKeyCode) {
-    // 连续触发同一个键时，应节流 + 延音
     if (!keyLock) {
-      toPlayNote(null, keyCode, "keyboard");
-      // 这里应该延音，解决中...
+      toPlayNote(keyCode);
       lastKeyCode = keyCode;
       keyLock = true;
     }
@@ -94,27 +113,35 @@ function toKeyDown(e: KeyboardEvent) {
     }, 120);
 
   } else {
-    toPlayNote(null, keyCode, "keyboard");
+    toPlayNote(keyCode);
     lastKeyCode = keyCode;
   }
 
   e.preventDefault();
 }
 
-function toPlayNote(e: Event | null, keyCode: string, type?: KeyPressType): void {
+function toKeyUp(e: KeyboardEvent) {
+  let keyCode = e.keyCode + "";
+  if (keyCode == ShiftKeyCode) {
+    enableBlackKey = false;
+  }
+  storage.setState({ currentIdx: -1});
+}
+
+function toMouseDown(e: Event, keyCode: string) {
+  toPlayNote(keyCode)
+}
+
+function toMouseUp() {
+  currentIdx.value = -1;
+  storage.setState({ currentIdx: -1});
+}
+
+function toPlayNote(keyCode: string): void {
   let { note, idx } = getNoteByKeyCode(noteList, keyCode);
 
   if (note) {
-    playNote(note.name);
-
-    if (type === "keyboard" && idx) {
-      if (preNoteIdx !== -1) {
-        noteList[preNoteIdx].actived = false;
-      }
-
-      preNoteIdx = idx;
-      noteList[idx].actived = true;
-    }
+    storage.setState({ currentIdx: idx, noteName: note.name});
   }
 }
 
@@ -152,6 +179,10 @@ function computeEleSize(): void {
 function getKeyType(type: string) {
   return type === "black" ? "bkey" : "wkey";
 }
+
+function changeKeyStatus(k: any, v: any) {
+  storage.setState({ [k]: v });
+}
 </script>
 
 <template>
@@ -164,16 +195,17 @@ function getKeyType(type: string) {
         <div class="piano-tip">⇧ 代表 shift 键</div>
       </div>
       <div id="piano-key-wrap" class="piano-key-wrap">
-        <template v-for="note in noteList">
+        <template v-for="(note, idx) in noteList">
           <div
             :class="[
               'piano-key',
               getKeyType(note.type),
-              note.actived && `${getKeyType(note.type)}-active`
+              idx === currentIdx && `${getKeyType(note.type)}-active`
             ]"
             :data-keyCode="note.keyCode"
             :data-name="note.name"
-            @click.stop="toPlayNote($event, note.keyCode)"
+            @mousedown.stop="toMouseDown($event, note.keyCode)"
+            @mouseup.stop="toMouseUp()"
           >
             <div class="keytip">
               <div
@@ -198,13 +230,13 @@ function getKeyType(type: string) {
   <div class="piano-options">
     <label class="label">
       显示按键提示
-      <input type="checkbox" id="keyname" v-model="showKeyName" />
+      <input type="checkbox" @input="changeKeyStatus('showKeyName', !showKeyName)" id="keyname" v-model="showKeyName" />
       <i></i>
     </label>
 
     <label class="label">
       显示音名
-      <input type="checkbox" id="notename" v-model="showNoteName" />
+      <input type="checkbox" id="notename" @input="changeKeyStatus('showNoteName', !showNoteName)" v-model="showNoteName" />
       <i></i>
     </label>
   </div>
