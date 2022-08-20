@@ -31,7 +31,10 @@ type R = {
 export function getNoteByKeyCode(noteList: Note[], keyCode: string): R {
   let idx = 0;
   const note: Note | null =
-    noteList.find((n, i) => n.keyCode == keyCode && (idx = i)) || null;
+    noteList.find((n, i) => {
+      if (n.keyCode == keyCode) idx = i;
+      return n.keyCode == keyCode
+    }) || null;
 
   return {
     note,

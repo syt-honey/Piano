@@ -1,14 +1,16 @@
 <script lang="ts" setup>
 import type { Note } from "./typings";
+import WebAudioTinySynth from 'webaudio-tinysynth';
 
 import { Notes } from "../utils/index.js";
-import SmapleLibrary from "../lib/tonejs-instruments";
 import { getToHandleList, getNoteByKeyCode } from "../utils/common.js";
 import { ref, onMounted, nextTick, onBeforeUnmount } from "vue";
 
+const synth = new WebAudioTinySynth({ quality: 1, useReverb: 0 });
+
 const { context } = defineProps(['context']);
 
-const storage = context.createStorage("APianoni1234435", {
+const storage = context.createStorage("Piano", {
   showKeyName: true,
   showNoteName: false,
   showPiano: false,
@@ -29,15 +31,15 @@ let enableBlackKey = false;
 
 const stepper: number[] = getToHandleList();
 
-const synth = SmapleLibrary.load({
-  instruments: "piano"
-}).toMaster();
-
 window?.manager.emitter.on("boxStateChange", (state) => {
   if (state === "minimized") {
     clearKeyboardEvent();
   }
 });
+
+context.addMagixEventListener("play", (e: any) => {
+  playNote(e.payload)
+})
 
 onMounted(() => {
   storage.addStateChangedListener((o: any) => {
@@ -55,8 +57,18 @@ onMounted(() => {
 
     if (o.hasOwnProperty("currentIdx")) {
       currentIdx.value = storage.state.currentIdx;
-      noteName.value = storage.state.playNote;
-      playNote(noteName.value)
+    }
+
+    if (o.hasOwnProperty("noteName")) {
+      noteName.value = storage.state.noteName;
+
+      if (noteName.value && currentIdx.value !== -1) {
+        context.dispatchMagixEvent(
+          "play",
+          noteName.value
+        );
+        storage.setState({ noteName: "" });
+      }
     }
   });
 
@@ -64,12 +76,13 @@ onMounted(() => {
 
   nextTick(() => {
     computeEleSize();
-    storage.setState({ ...storage.state, showPiano: true });
+    storage.setState({ showPiano: true });
   });
 });
 
 onBeforeUnmount(() => {
   clearKeyboardEvent();
+  storage.deleteStorage();
 });
 
 function clearKeyboardEvent() {
@@ -133,22 +146,21 @@ function toMouseDown(e: Event, keyCode: string) {
 }
 
 function toMouseUp() {
-  currentIdx.value = -1;
   storage.setState({ currentIdx: -1});
 }
 
 function toPlayNote(keyCode: string): void {
-  let { note, idx } = getNoteByKeyCode(noteList, keyCode);
+  const { note, idx } = getNoteByKeyCode(noteList, keyCode);
 
   if (note) {
-    storage.setState({ currentIdx: idx, noteName: note.name});
+    storage.setState({ currentIdx: idx, noteName: note.note });
   }
 }
 
-function playNote(notename: string = "C4", duration: string = "1n"): void {
+function playNote(notename: string = "60"): void {
   if (!synth) return;
   try {
-    synth.triggerAttackRelease(notename, duration);
+    synth.send([0x90, notename, 100]);
   } catch (e) {}
 };
 
@@ -228,7 +240,11 @@ function changeKeyStatus(k: any, v: any) {
   </div>
 
   <div class="piano-options">
-    <label class="label">
+    <div>
+      <!-- <webaudio-tinysynth id="tinysynth" src="ws.mid" quality="1" loop="1" disableDrop="0" masterVol="0.3"></webaudio-tinysynth> -->
+    </div>
+    <div>
+      <label class="label">
       显示按键提示
       <input type="checkbox" @input="changeKeyStatus('showKeyName', !showKeyName)" id="keyname" v-model="showKeyName" />
       <i></i>
@@ -239,6 +255,7 @@ function changeKeyStatus(k: any, v: any) {
       <input type="checkbox" id="notename" @input="changeKeyStatus('showNoteName', !showNoteName)" v-model="showNoteName" />
       <i></i>
     </label>
+    </div>
   </div>
 </template>
 

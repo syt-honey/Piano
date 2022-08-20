@@ -4,6 +4,7 @@ export interface Note {
   keyCode: string,
   name: string,
   key: string,
+  note: string,
   actived?: boolean
 }
 
