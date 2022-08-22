@@ -1,62 +1,20 @@
-# Netless App Template
+## Mia Piano
 
-[Netless App 文档](https://github.com/netless-io/window-manager/blob/master/docs/develop-app.md)
+Mia Piano 是一个给钢琴老师用来线上教学的插件。我们的愿景是，为钢琴老师教授初学者时提供一个比较好的教授及练习平台。
 
-## 快速开始
+提供了：
+* 键盘按键弹奏、鼠标点击弹奏
+* 支持大量乐器切换
+* 支持音名提示/按键提示
 
-前置条件：至少需要安装了 `git`、`node 16`、`npm 8`。
+## 预览
 
-1.  点击右上角 `Use this template` 生成一个属于你自己的仓库
+![预览一](./preview/1.png)  
+![预览二](./preview/2.png)  
+![预览三](./preview/3.png)
 
-    如果需要选用原生以外的模版，请勾上 `Include all branches`
+## 优化方向
 
-    > 如果你安装了 [GitHub CLI](https://cli.github.com)，也可以用这个命令一键生成并 clone 本仓库
-    >
-    >     gh repo create your-app-name --template netless-io/community-apps --include-all-branches
-
-2.  在 .env 文件里配置白板房间 UUID 和 Token
-
-    请将本目录下的 .env.example 文件复制一份，重命名为 .env 或 .env.local 后，在里面填写必须的白板配置信息。你可以在 [Netless Workshop](https://workshop.netless.link) 申请专用的白板配置。
-
-3.  执行 `npm install` 安装依赖
-
-4.  执行 `npm start` 进行本地开发
-
-## 提交到社区 App 列表
-
-开发完 App 后，可以在 [Community Apps](https://github.com/netless-io/community-apps) 仓库提交你的项目，方便更多人发现和使用。
-
-## 基础清单
-
-- [x] 添加 .env 或 .env.local
-- [x] 修改 package.json 里的 `name`，`private` 等字段
-- [ ] (可选) 发布 npm 包
-- [ ] 添加 License
-- [x] 修改 README
-- [x] (可选) 添加 Logo
-
-## 开发清单
-
-- [x] 基础布局完成
-- [x] 点击鼠标，交互+音表现正确
-- [x] 点击键盘，交互+音表现正确
-- [x] 关闭/最小化时禁用键盘/鼠标事件
-- [x] 文件上传
-- [ ] 自动演奏
-- [ ] 切换乐器类型
-- [ ] 内置基础歌曲词谱
-- [ ] 支持外接设备（MIDI键盘编曲）
-
-## bug修复清单
-
-- [x] 修复黑键active时样式不对的问题
-- [x] 修复窗口关闭后仍然可以听到声音的 bug
-- [x] 声音不同步
-
-## 优化清单
-
-- [x] 弹奏时选中的高亮
-- [x] 窗口名称、当前操作的用户昵称(不考虑)
-- [ ] 当窗口失焦时，禁用键盘事件
-- [ ] 禁用窗口内部的全局 keydown 等事件
-- [ ] 不允许多窗口
+- 实现自动演奏，为教学场景提供更加生动且可视化的平台。
+- 内置常用MIDI谱子
+- 支持外接设备（MIDI键盘编曲）

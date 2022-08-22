@@ -1,14 +1,23 @@
 <script lang="ts" setup>
-import { watch, ref } from "vue";
+import { watch, ref, onMounted } from "vue";
 
-const { synth } = defineProps(['synth']);
-let selectedProg = ref(0);
+const { synth, storage } = defineProps(['synth', 'storage']);
+let program = ref(storage.state.program);
 const progs = getProgs();
 
-watch(selectedProg, (i) => {
+watch(program, (i) => {
+  storage.setState({ program: i })
   if (synth) {
     synth.send([0xc0, i]);
   }
+});
+
+onMounted(() => {
+  storage.addStateChangedListener((o: any) => {
+    if (o.hasOwnProperty("program")) {
+      program.value = storage.state.program;
+    }
+  });
 });
 
 function getProgs() {
@@ -22,7 +31,7 @@ function getProgs() {
 }
 </script>
 <template>
-  <select class="piano-select" v-model="selectedProg">
+  <select class="piano-select" v-model="program">
     <option v-for="(t, idx) in progs" :value="idx">{{t}}</option>
   </select>
 </template>

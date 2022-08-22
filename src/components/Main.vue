@@ -12,7 +12,10 @@ const storage = context.createStorage("Piano", {
   showNoteName: false,
   showPiano: false,
   currentIdx: -1,
-  noteName: ""
+  noteName: "",
+  midiName: "",
+  isPlaying: false,
+  program: 0
 });
 
 let showPiano = ref(storage.state.showPiano);

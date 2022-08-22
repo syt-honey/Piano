@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import SelectProgram from "./SelectProgram.vue";
-import UploadMidi from "./UploadMidi.vue";
+// import UploadMidi from "./UploadMidi.vue";
 
 import { getToHandleList, getNoteByKeyCode, getNoteByTick } from "../utils/common.js";
-import { ref, onMounted, nextTick, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, nextTick, onBeforeUnmount } from "vue";
 import type { Note } from "../utils/typings";
 import { Notes } from "../utils/index.js";
 
@@ -184,15 +184,15 @@ function toPlayNote(keyCode: string): void {
 <template>
   <div class="piano-band flex-center">
     <div class="piano-tip flex-center">
-      <div class="piano-tip__view" style="width: 30px">{{ curNoteName }}</div>
-
-      <div class="piano-tip__view">
-        乐器：<SelectProgram :synth="synth"></SelectProgram>
-      </div>
+      <div v-if="curNoteName" class="piano-tip__view" style="width: 30px">{{ curNoteName }}</div>
 
       <div>
-        <UploadMidi :synth="synth"></UploadMidi>
+        乐器：<SelectProgram :synth="synth" :storage="storage"></SelectProgram>
       </div>
+
+      <!-- <div>
+        <UploadMidi :synth="synth" :storage="storage"></UploadMidi>
+      </div> -->
     </div>
   </div>
   <div id="piano-key-wrap" class="piano-key-wrap">
