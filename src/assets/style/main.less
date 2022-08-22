@@ -1,0 +1,32 @@
+.flex-center {
+  display: flex;
+  align-items: center;
+}
+
+.text-overflow {
+  text-overflow: -o-ellipsis-lastline;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-inline-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.piano-scroll-wrap {
+  width: 100%;
+}
+
+.piano-wrap {
+  position: relative;
+  overflow: hidden;
+  width: 95%;
+  margin: 20px auto;
+  box-shadow: 5px 5px 20px 5px #888;
+  border-radius: 8px;
+  opacity: 0;
+}
+
+.piano-wrap.visible {
+  opacity: 1;
+}

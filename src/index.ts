@@ -5,7 +5,7 @@ import styles from "./style.css?inline";
 import App from "./components/App.vue";
 
 const Counter: NetlessApp = {
-  kind: "Piano",
+  kind: "Mia Piano",
   setup(context) {
     const box = context.getBox();
     box.mountStyles(styles);

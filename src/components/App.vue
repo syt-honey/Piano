@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import Piano from "./Piano.vue";
-import Footer from "./Footer.vue";
+import Main from "./Main.vue";
 import type { AppContext } from "@netless/window-manager";
 import { inject } from "vue";
 
@@ -9,6 +8,5 @@ if (!context) throw new Error("must call provide('context') before mount App");
 </script>
 
 <template>
-  <Piano :context="context"></Piano>
-  <!-- <Footer></Footer> -->
+  <Main :context="context"></Main>
 </template>

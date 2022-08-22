@@ -1,0 +1,53 @@
+.piano-options {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  width: 95%;
+  height: 50px;
+  margin: 20px auto 15px;
+  padding: 0;
+
+  .label {
+    display: inline-block;
+    > input {
+      display: none;
+    }
+    i {
+      position: relative;
+      display: inline-block;
+      margin-left: 5px;
+      padding: 2px;
+      width: 40px;
+      height: 20px;
+      border-radius: 13px;
+      vertical-align: middle;
+      transition: 0.25s 0.09s;
+      background: #d8d9db;
+      box-sizing: initial;
+      &:hover {
+        cursor: pointer;
+      }
+      &:after {
+        position: absolute;
+        left: 2px;
+        display: block;
+        width: 20px;
+        height: 20px;
+        content: " ";
+        border-radius: 50%;
+        background: #fff;
+        transition: 0.25s;
+      }
+    }
+    > input:checked + i {
+      background: #07E26D;
+    }
+    > input:checked + i:after {
+      transform: translateX(20px);
+    }
+  }
+
+  .label + .label {
+    margin-left: 20px;
+  }
+}

@@ -1,4 +1,4 @@
-import type { Note } from "./../components/typings";
+import type { Note } from "./typings";
 /**
  * 观察可知，黑键为 2 个、3 个间隔排放。所以可以将 idx 从 0 开始计算，同时与 2、3间隔相加，即可得出需要特殊处理的黑键下标。
  * @returns 需要黑键中特殊处理键的下标列表。
@@ -40,4 +40,17 @@ export function getNoteByKeyCode(noteList: Note[], keyCode: string): R {
     note,
     idx
   };
+}
+
+/**
+ * 根据 tick 获取对应的音名
+ * @param noteList 音源列表
+ * @param tick 当前的 note
+ * @returns 音源列表中对应 name 的项
+ */
+export function getNoteByTick(noteList: Note[], tick: string): string {
+  const note: Note | null =
+    noteList.find((n) => n.note == tick) || null;
+
+  return note?.name || "";
 }
