@@ -1,7 +1,7 @@
 {
-  "name": "app-counter",
-  "version": "0.1.0",
-  "description": "Template for a Netless Community App",
+  "name": "Mia Piano",
+  "version": "1.0.0",
+  "description": "A Online Piano",
   "private": true,
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
@@ -9,6 +9,12 @@
     "src",
     "dist"
   ],
+  "author": "syt-honey",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/syt-honey/Piano.git"
+  },
   "scripts": {
     "start": "vite",
     "build": "vite build"
